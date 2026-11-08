@@ -1,11 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { webcrypto } from 'node:crypto';
 import { formatJson, minifyJson, validateJson } from '../src/tools/json.js';
 import { generateUuid, generateUuids } from '../src/tools/uuid.js';
 import { decodeBase64, encodeBase64 } from '../src/tools/base64.js';
 import { analyzeText } from '../src/tools/text.js';
 import { convertColor, hexToRgb, parseRgb, rgbToHex, rgbToHsl } from '../src/tools/color.js';
 import { isoToTimestamp, timestampToIso } from '../src/tools/timestamp.js';
+
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', { configurable: true, value: webcrypto });
+}
 
 test('formats valid JSON with configurable indentation', () => {
   assert.equal(formatJson('{"name":"DevPocket"}', 4), '{\n    "name": "DevPocket"\n}');
@@ -30,6 +35,20 @@ test('generates UUID v4 identifiers and validates requested count', () => {
   assert.equal(new Set(generated).size, 5);
   assert.throws(() => generateUuids(0), RangeError);
   assert.throws(() => generateUuids(101), RangeError);
+});
+
+test('generates UUIDs with secure random bytes when randomUUID is unavailable', () => {
+  const originalCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+  Object.defineProperty(globalThis, 'crypto', {
+    configurable: true,
+    value: { getRandomValues: webcrypto.getRandomValues.bind(webcrypto) }
+  });
+
+  try {
+    assert.match(generateUuid(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  } finally {
+    Object.defineProperty(globalThis, 'crypto', originalCrypto);
+  }
 });
 
 test('encodes and decodes Base64', () => {
