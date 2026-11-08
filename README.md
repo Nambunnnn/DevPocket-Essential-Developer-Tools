@@ -9,6 +9,7 @@ DevPocket is a lightweight, browser-based toolbox for everyday developer tasks. 
 - **Base64 converter** — encode and decode UTF-8 text, including Unicode; invalid Base64 and invalid UTF-8 are reported.
 - **Text analyzer** — live word, character, no-space character, line, and estimated reading-time counts.
 - **Color converter** — convert HEX to RGB or HSL, and RGB to HEX or HSL, with a live preview and input validation.
+- **Timestamp converter** — convert Unix timestamps in seconds or milliseconds to ISO dates and dates back to timestamps.
 - Responsive navigation, tool search, keyboard shortcut (`⌘ K` / `Ctrl K`), clipboard actions, and accessible status notifications.
 
 ## Technologies
@@ -32,7 +33,8 @@ DevPocket/
 │   │   ├── uuid.js
 │   │   ├── base64.js
 │   │   ├── text.js
-│   │   └── color.js
+│   │   ├── color.js
+│   │   └── timestamp.js
 │   └── utils/
 │       └── clipboard.js
 ├── tests/
@@ -55,7 +57,7 @@ ES modules should be served over HTTP rather than opened directly with `file://`
 
 ## Usage
 
-Choose a tool from the sidebar or the overview cards. Use the controls in each workspace to process the input. All conversion and analysis logic runs locally in the page. The JSON, Base64, and color tools report invalid input in the workspace and through a notification. UUIDs are generated on demand and are not stored.
+Choose a tool from the sidebar or the overview cards. Use the controls in each workspace to process the input. The timestamp converter supports seconds and milliseconds, and converts dates entered in the browser's local time zone or as ISO date-time strings with an explicit offset. All conversion and analysis logic runs locally in the page. Tools report invalid input in the workspace and through a notification. UUIDs are generated on demand and are not stored.
 
 ## Running tests
 
@@ -63,7 +65,7 @@ Choose a tool from the sidebar or the overview cards. Use the controls in each w
 npm test
 ```
 
-The suite covers formatting and invalid JSON, UUID v4 generation, Base64 and Unicode handling, text statistics, color conversions, and invalid colors.
+The suite covers formatting and invalid JSON, UUID v4 generation, Base64 and Unicode handling, text statistics, color conversions, timestamp conversion and validation, and invalid colors.
 
 ## Deploying with GitHub Pages
 
