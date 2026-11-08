@@ -73,16 +73,6 @@ The suite covers formatting and invalid JSON, UUID v4 generation, Base64 and Uni
 
 GitHub Actions runs this suite on Node.js 18, 20, and 22 for pushes and pull requests targeting `main`.
 
-## Deploying with GitHub Pages
-
-1. Push the repository to GitHub.
-2. In the repository, open **Settings → Pages**.
-3. Set the Pages source to **GitHub Actions**.
-4. The `Deploy GitHub Pages` workflow publishes the site on pushes to `main`. You can also start it manually from the **Actions** tab.
-5. After the workflow succeeds, use the URL shown in the Pages settings or deployment summary.
-
-The workflow publishes only `index.html` and `src/`. The site uses relative asset paths and can be served from a repository subpath. A successful deployment has not been verified by this project.
-
 ## License
 
 Released under the [MIT License](./LICENSE).
