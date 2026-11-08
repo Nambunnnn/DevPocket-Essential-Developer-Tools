@@ -25,6 +25,9 @@ DevPocket/
 ├── LICENSE
 ├── package.json
 ├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── test.yml
 ├── src/
 │   ├── app.js
 │   ├── styles.css
@@ -66,6 +69,8 @@ npm test
 ```
 
 The suite covers formatting and invalid JSON, UUID v4 generation, Base64 and Unicode handling, text statistics, color conversions, timestamp conversion and validation, and invalid colors.
+
+GitHub Actions runs this suite on Node.js 18, 20, and 22 for pushes and pull requests targeting `main`.
 
 ## Deploying with GitHub Pages
 
