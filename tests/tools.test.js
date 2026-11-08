@@ -5,6 +5,7 @@ import { generateUuid, generateUuids } from '../src/tools/uuid.js';
 import { decodeBase64, encodeBase64 } from '../src/tools/base64.js';
 import { analyzeText } from '../src/tools/text.js';
 import { convertColor, hexToRgb, parseRgb, rgbToHex, rgbToHsl } from '../src/tools/color.js';
+import { isoToTimestamp, timestampToIso } from '../src/tools/timestamp.js';
 
 test('formats valid JSON with configurable indentation', () => {
   assert.equal(formatJson('{"name":"DevPocket"}', 4), '{\n    "name": "DevPocket"\n}');
@@ -82,4 +83,28 @@ test('rejects invalid color values', () => {
   assert.throws(() => parseRgb('rgb(256, 0, 0)'), /0 to 255/);
   assert.throws(() => rgbToHex({ r: -1, g: 0, b: 0 }), /0 to 255/);
   assert.throws(() => convertColor('red', 'hex-rgb'), /3- or 6-digit HEX/);
+});
+
+test('converts Unix timestamps to ISO dates in seconds or milliseconds', () => {
+  assert.equal(timestampToIso('0'), '1970-01-01T00:00:00.000Z');
+  assert.equal(timestampToIso('0', 'milliseconds'), '1970-01-01T00:00:00.000Z');
+  assert.equal(timestampToIso('1767225600'), '2026-01-01T00:00:00.000Z');
+  assert.equal(timestampToIso('-1', 'milliseconds'), '1969-12-31T23:59:59.999Z');
+});
+
+test('converts ISO dates to Unix timestamps and preserves milliseconds', () => {
+  assert.equal(isoToTimestamp('1970-01-01T00:00:00Z'), '0');
+  assert.equal(isoToTimestamp('2026-01-01T00:00:00Z'), '1767225600');
+  assert.equal(isoToTimestamp('2026-01-01T00:00:00.123Z', 'milliseconds'), '1767225600123');
+  assert.equal(isoToTimestamp('2026-01-01T00:00:00.123Z'), '1767225600.123');
+});
+
+test('rejects invalid timestamps, dates, and units', () => {
+  assert.throws(() => timestampToIso('1.5'), /whole-number/);
+  assert.throws(() => timestampToIso('not a timestamp'), /whole-number/);
+  assert.throws(() => timestampToIso('8640000000000001', 'milliseconds'), /range/);
+  assert.throws(() => timestampToIso('0', 'minutes'), /seconds or milliseconds/);
+  assert.throws(() => isoToTimestamp('not a date'), /ISO format/);
+  assert.throws(() => isoToTimestamp('2026-02-31T12:00'), /valid date and time/);
+  assert.throws(() => isoToTimestamp('2026-01-01T00:00', 'minutes'), /seconds or milliseconds/);
 });
