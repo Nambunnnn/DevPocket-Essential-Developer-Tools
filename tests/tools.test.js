@@ -97,6 +97,7 @@ test('converts ISO dates to Unix timestamps and preserves milliseconds', () => {
   assert.equal(isoToTimestamp('2026-01-01T00:00:00Z'), '1767225600');
   assert.equal(isoToTimestamp('2026-01-01T00:00:00.123Z', 'milliseconds'), '1767225600123');
   assert.equal(isoToTimestamp('2026-01-01T00:00:00.123Z'), '1767225600.123');
+  assert.equal(isoToTimestamp('2026-01-01T01:00:00+01:00'), '1767225600');
 });
 
 test('rejects invalid timestamps, dates, and units', () => {
@@ -106,5 +107,6 @@ test('rejects invalid timestamps, dates, and units', () => {
   assert.throws(() => timestampToIso('0', 'minutes'), /seconds or milliseconds/);
   assert.throws(() => isoToTimestamp('not a date'), /ISO format/);
   assert.throws(() => isoToTimestamp('2026-02-31T12:00'), /valid date and time/);
+  assert.throws(() => isoToTimestamp('2026-02-31T12:00Z'), /valid date and time/);
   assert.throws(() => isoToTimestamp('2026-01-01T00:00', 'minutes'), /seconds or milliseconds/);
 });

@@ -12,9 +12,28 @@ function parseIsoDateTime(input) {
   }
 
   const [, year, month, day, hour, minute, second = '0', fraction = '', timezone = ''] = match;
+  const calendar = new Date(0);
+  calendar.setUTCFullYear(Number(year), Number(month), 0);
+  if (
+    Number(month) < 1
+    || Number(month) > 12
+    || Number(day) < 1
+    || Number(day) > calendar.getUTCDate()
+    || Number(hour) > 23
+    || Number(minute) > 59
+    || Number(second) > 59
+  ) {
+    throw new RangeError('Enter a valid date and time.');
+  }
+
+  const milliseconds = Number(fraction.padEnd(3, '0'));
   const date = timezone
     ? new Date(value)
-    : new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second), Number(fraction.padEnd(3, '0')));
+    : new Date(0);
+  if (!timezone) {
+    date.setFullYear(Number(year), Number(month) - 1, Number(day));
+    date.setHours(Number(hour), Number(minute), Number(second), milliseconds);
+  }
 
   if (Number.isNaN(date.getTime())) {
     throw new RangeError('Enter a valid date and time.');
@@ -27,6 +46,7 @@ function parseIsoDateTime(input) {
     || date.getHours() !== Number(hour)
     || date.getMinutes() !== Number(minute)
     || date.getSeconds() !== Number(second)
+    || date.getMilliseconds() !== milliseconds
   )) {
     throw new RangeError('Enter a valid date and time.');
   }

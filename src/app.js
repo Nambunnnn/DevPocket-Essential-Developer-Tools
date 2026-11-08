@@ -3,6 +3,7 @@ import { generateUuids } from './tools/uuid.js';
 import { decodeBase64, encodeBase64 } from './tools/base64.js';
 import { analyzeText } from './tools/text.js';
 import { convertColor, hexToRgb, parseRgb } from './tools/color.js';
+import { isoToTimestamp, timestampToIso } from './tools/timestamp.js';
 import { copyText } from './utils/clipboard.js';
 
 const tools = [
@@ -10,7 +11,8 @@ const tools = [
   { id: 'uuid', name: 'UUID generator', description: 'Create secure UUID v4 identifiers.', category: 'Generator', icon: '◇' },
   { id: 'base64', name: 'Base64 converter', description: 'Encode or decode text and Unicode.', category: 'Encoding', icon: '⇄' },
   { id: 'text', name: 'Text analyzer', description: 'Count words, characters, and reading time.', category: 'Text', icon: 'Tt' },
-  { id: 'color', name: 'Color converter', description: 'Convert HEX, RGB, and HSL values.', category: 'Color', icon: '◉' }
+  { id: 'color', name: 'Color converter', description: 'Convert HEX, RGB, and HSL values.', category: 'Color', icon: '◉' },
+  { id: 'timestamp', name: 'Timestamp converter', description: 'Convert Unix timestamps and dates.', category: 'Time', icon: '◷' }
 ];
 
 const app = document.querySelector('#app');
@@ -131,6 +133,20 @@ const toolTemplates = {
         <div class="color-results"><div class="result-heading"><span>CONVERSION</span><span id="color-status" aria-live="polite">READY</span></div><div id="color-result" class="color-result">—</div><button class="copy-value" data-action="color-copy" disabled>Copy value <span>⧉</span></button></div>
       </div>
       <div class="workspace-actions"><button class="button button-primary" data-action="color-convert">Convert color <span>↗</span></button></div>
+    </section>`,
+  timestamp: () => `${toolHeading(tools[5])}
+    <section class="workspace-card compact-workspace">
+      <div class="workspace-toolbar"><div class="workspace-tab"><span class="tab-dot"></span>TIME WORKSPACE</div>
+        <div class="timestamp-controls">
+          <label class="control-label" for="timestamp-mode">CONVERT<select id="timestamp-mode"><option value="timestamp-to-date">Timestamp to date</option><option value="date-to-timestamp">Date to timestamp</option></select></label>
+          <label class="control-label" for="timestamp-unit">UNIT<select id="timestamp-unit"><option value="seconds">Seconds</option><option value="milliseconds">Milliseconds</option></select></label>
+        </div>
+      </div>
+      <div class="timestamp-grid">
+        <div class="timestamp-field"><label class="field-label" id="timestamp-input-label" for="timestamp-input">UNIX TIMESTAMP</label><input id="timestamp-input" type="text" inputmode="numeric" spellcheck="false" placeholder="e.g. 1767225600" aria-label="Unix timestamp"></div>
+        <div class="timestamp-result"><div class="result-heading"><span>RESULT</span><span id="timestamp-status" class="pane-hint" aria-live="polite">READY</span></div><pre id="timestamp-output" aria-live="polite">Your converted value will appear here.</pre><button class="copy-value" data-action="timestamp-copy" disabled>Copy result <span aria-hidden="true">⧉</span></button></div>
+      </div>
+      <div class="workspace-actions"><button class="button button-primary" data-action="timestamp-convert">Convert <span aria-hidden="true">↗</span></button></div>
     </section>`
 };
 
@@ -357,6 +373,31 @@ function handleAction(action, target) {
     return;
   }
   if (action === 'color-copy') copyWithToast(document.querySelector('#color-result').dataset.value, 'Color value');
+  if (action === 'timestamp-convert') {
+    const input = document.querySelector('#timestamp-input').value;
+    const unit = document.querySelector('#timestamp-unit').value;
+    const direction = document.querySelector('#timestamp-mode').value;
+    try {
+      if (!input.trim()) throw new Error('Enter a timestamp or date before converting.');
+      const output = direction === 'timestamp-to-date'
+        ? timestampToIso(input, unit)
+        : isoToTimestamp(input, unit);
+      const result = document.querySelector('#timestamp-output');
+      result.textContent = output;
+      result.dataset.value = output;
+      setStatus('timestamp-status', 'Converted', 'status-success');
+      document.querySelector('[data-action="timestamp-copy"]').disabled = false;
+    } catch (error) {
+      resetTimestampResult();
+      setStatus('timestamp-status', error.message, 'status-error');
+      showToast(error.message, 'error');
+    }
+    return;
+  }
+  if (action === 'timestamp-copy') {
+    copyWithToast(document.querySelector('#timestamp-output').dataset.value, 'Result');
+    return;
+  }
 }
 
 document.addEventListener('click', (event) => {
@@ -378,6 +419,7 @@ document.addEventListener('input', (event) => {
     document.querySelector('#base64-output').value = '';
     setStatus('base64-status', 'Input changed');
   }
+  if (event.target.id === 'timestamp-input') resetTimestampResult();
   if (event.target.id === 'text-input') updateTextStats();
   if (event.target.id === 'color-input') {
     updateColorPreview();
@@ -386,6 +428,19 @@ document.addEventListener('input', (event) => {
 });
 
 document.addEventListener('change', (event) => {
+  if (event.target.id === 'timestamp-mode' || event.target.id === 'timestamp-unit') {
+    if (event.target.id === 'timestamp-mode') {
+      const input = document.querySelector('#timestamp-input');
+      const dateMode = event.target.value === 'date-to-timestamp';
+      input.type = dateMode ? 'datetime-local' : 'text';
+      input.inputMode = dateMode ? 'text' : 'numeric';
+      input.setAttribute('aria-label', dateMode ? 'Date and time' : 'Unix timestamp');
+      input.placeholder = dateMode ? '' : 'e.g. 1767225600';
+      document.querySelector('#timestamp-input-label').textContent = dateMode ? 'DATE AND TIME' : 'UNIX TIMESTAMP';
+      input.value = '';
+    }
+    resetTimestampResult();
+  }
   if (event.target.id === 'color-mode') {
     document.querySelector('#color-hint').textContent = event.target.value.startsWith('hex-')
       ? 'Accepts 3- or 6-digit HEX, with or without #.'
@@ -394,6 +449,15 @@ document.addEventListener('change', (event) => {
     resetColorResult();
   }
 });
+
+function resetTimestampResult() {
+  const output = document.querySelector('#timestamp-output');
+  if (!output) return;
+  output.textContent = 'Your converted value will appear here.';
+  delete output.dataset.value;
+  setStatus('timestamp-status', 'READY');
+  document.querySelector('[data-action="timestamp-copy"]').disabled = true;
+}
 
 document.addEventListener('keydown', (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
