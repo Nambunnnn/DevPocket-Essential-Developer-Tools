@@ -27,7 +27,8 @@ DevPocket/
 ├── .gitignore
 ├── .github/
 │   └── workflows/
-│       └── test.yml
+│       ├── test.yml
+│       └── pages.yml
 ├── src/
 │   ├── app.js
 │   ├── styles.css
@@ -76,10 +77,11 @@ GitHub Actions runs this suite on Node.js 18, 20, and 22 for pushes and pull req
 
 1. Push the repository to GitHub.
 2. In the repository, open **Settings → Pages**.
-3. Select **Deploy from a branch**, choose the branch containing the site (usually `main`) and the `/ (root)` folder, then save.
-4. Once GitHub Pages finishes publishing, use the URL shown in the Pages settings.
+3. Set the Pages source to **GitHub Actions**.
+4. The `Deploy GitHub Pages` workflow publishes the site on pushes to `main`. You can also start it manually from the **Actions** tab.
+5. After the workflow succeeds, use the URL shown in the Pages settings or deployment summary.
 
-The site uses relative asset paths and can be served from a repository subpath. No deployment is configured or claimed by this repository.
+The workflow publishes only `index.html` and `src/`. The site uses relative asset paths and can be served from a repository subpath. A successful deployment has not been verified by this project.
 
 ## License
 
