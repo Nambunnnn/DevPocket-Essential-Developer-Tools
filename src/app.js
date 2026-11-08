@@ -26,7 +26,7 @@ app.innerHTML = `
       </a>
       <div class="nav-label">WORKSPACE</div>
       <nav class="primary-nav">
-        <button class="nav-item" data-action="navigate" data-tool="overview"><span class="nav-icon">⌂</span>Overview</button>
+        <button class="nav-item" data-action="navigate" data-tool="overview" aria-current="page"><span class="nav-icon" aria-hidden="true">⌂</span>Overview</button>
       </nav>
       <div class="nav-label nav-tools-label">TOOLS</div>
       <nav class="tool-nav" aria-label="Developer tools"></nav>
@@ -35,12 +35,12 @@ app.innerHTML = `
     <div class="mobile-scrim" data-action="close-menu"></div>
     <main class="main-area">
       <header class="topbar">
-        <button class="icon-button mobile-menu" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+        <button class="icon-button mobile-menu" data-action="toggle-menu" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span></span><span></span><span></span></button>
         <div class="breadcrumbs"><span>Workspace</span><span class="crumb-separator">/</span><strong id="page-title">Overview</strong></div>
       </header>
       <div class="content" id="content"></div>
     </main>
-    <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <div class="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
   </div>
 `;
 
@@ -49,9 +49,12 @@ const nav = document.querySelector('.tool-nav');
 
 function renderNavigation(filter = '') {
   const matches = tools.filter((tool) => `${tool.name} ${tool.description}`.toLowerCase().includes(filter.toLowerCase()));
-  document.querySelector('.primary-nav [data-tool="overview"]').classList.toggle('active', currentTool === 'overview');
+  const overviewButton = document.querySelector('.primary-nav [data-tool="overview"]');
+  overviewButton.classList.toggle('active', currentTool === 'overview');
+  if (currentTool === 'overview') overviewButton.setAttribute('aria-current', 'page');
+  else overviewButton.removeAttribute('aria-current');
   nav.innerHTML = matches.length
-    ? matches.map((tool) => `<button class="nav-item ${currentTool === tool.id ? 'active' : ''}" data-action="navigate" data-tool="${tool.id}"><span class="nav-icon">${tool.icon}</span>${tool.name}</button>`).join('')
+    ? matches.map((tool) => `<button class="nav-item ${currentTool === tool.id ? 'active' : ''}" data-action="navigate" data-tool="${tool.id}" ${currentTool === tool.id ? 'aria-current="page"' : ''}><span class="nav-icon" aria-hidden="true">${tool.icon}</span>${tool.name}</button>`).join('')
     : '<p class="nav-empty">No tools found</p>';
 }
 
@@ -69,7 +72,7 @@ function renderToolCards(filter = '') {
 function overviewTemplate() {
   return `
     <section class="page-heading overview-heading">
-      <div><div class="eyebrow"><span class="eyebrow-line"></span>DEVELOPER TOOLBOX</div><h1>Tools for your daily workflow.</h1><p class="lead">Small, useful utilities for the work you do every day.</p></div>
+      <div><div class="eyebrow"><span class="eyebrow-line"></span>DEVELOPER TOOLBOX</div><h1 tabindex="-1">Tools for your daily workflow.</h1><p class="lead">Small, useful utilities for the work you do every day.</p></div>
     </section>
     <section class="section-block">
       <div class="section-title-row"><h2>All tools</h2><label class="search-wrap"><span aria-hidden="true">⌕</span><input id="tool-search" type="search" placeholder="Search tools..." aria-label="Search tools"><kbd>⌘ K</kbd></label></div>
@@ -79,7 +82,7 @@ function overviewTemplate() {
 }
 
 function toolHeading(tool, eyebrow = 'DEVELOPER UTILITY') {
-  return `<section class="page-heading tool-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span>${eyebrow}</div><h1>${tool.name}</h1><p class="lead">${tool.description}</p></div><button class="back-button" data-action="navigate" data-tool="overview"><span>←</span> All tools</button></section>`;
+  return `<section class="page-heading tool-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span>${eyebrow}</div><h1 tabindex="-1">${tool.name}</h1><p class="lead">${tool.description}</p></div><button class="back-button" data-action="navigate" data-tool="overview"><span aria-hidden="true">←</span> All tools</button></section>`;
 }
 
 const toolTemplates = {
@@ -131,7 +134,7 @@ const toolTemplates = {
     </section>`
 };
 
-function renderPage() {
+function renderPage(focusHeading = false) {
   const tool = tools.find((entry) => entry.id === currentTool);
   document.querySelector('#page-title').textContent = tool?.name ?? 'Overview';
   renderNavigation(document.querySelector('#tool-search')?.value ?? '');
@@ -140,7 +143,10 @@ function renderPage() {
   if (currentTool === 'color') updateColorPreview();
   document.querySelector('.sidebar').classList.remove('open');
   document.querySelector('.mobile-scrim').classList.remove('visible');
-  document.querySelector('.mobile-menu').setAttribute('aria-expanded', 'false');
+  const menuButton = document.querySelector('.mobile-menu');
+  menuButton.setAttribute('aria-expanded', 'false');
+  menuButton.setAttribute('aria-label', 'Open navigation');
+  if (focusHeading) content.querySelector('h1')?.focus();
 }
 
 function showToast(message, type = 'success') {
@@ -250,7 +256,7 @@ function renderUuidList() {
     copy.dataset.action = 'uuid-copy-one';
     copy.dataset.uuid = uuid;
     copy.setAttribute('aria-label', `Copy UUID ${index + 1}`);
-    copy.innerHTML = '⧉';
+    copy.textContent = '⧉';
     row.append(number, value, copy);
     list.append(row);
   });
@@ -261,7 +267,7 @@ function handleAction(action, target) {
   if (action === 'navigate') {
     currentTool = target.dataset.tool;
     generatedUuids = [];
-    renderPage();
+    renderPage(true);
     return;
   }
   if (action === 'toggle-menu') {
@@ -270,12 +276,14 @@ function handleAction(action, target) {
     sidebar.classList.toggle('open', open);
     document.querySelector('.mobile-scrim').classList.toggle('visible', open);
     target.setAttribute('aria-expanded', String(open));
+    target.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
     return;
   }
   if (action === 'close-menu') {
     document.querySelector('.sidebar').classList.remove('open');
     document.querySelector('.mobile-scrim').classList.remove('visible');
     document.querySelector('.mobile-menu').setAttribute('aria-expanded', 'false');
+    document.querySelector('.mobile-menu').setAttribute('aria-label', 'Open navigation');
     return;
   }
   if (action.startsWith('json-')) {
